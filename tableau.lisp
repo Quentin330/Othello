@@ -4,6 +4,8 @@
 ; 3 si triche
 ; 6 si la famille
 
+
+; j'ai changé un truc
 ; cree le tableau du debut de la partie
 (defun init-tab()
   (make-array '(8 8) :initial-contents
