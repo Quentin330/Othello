@@ -4,8 +4,6 @@
 ; 3 si triche
 ; 6 si la famille
 
-
-; j'ai changé un truc
 ; cree le tableau du debut de la partie
 (defun init-tab()
   (make-array '(8 8) :initial-contents
@@ -30,7 +28,14 @@
 ; boolean
 (defun coup-valide(tab joueur x y)
   (if (case-vide tab x y)
-      (if (or (prise-possible-droite tab joueur x y) (prise-possible-bas-droite tab joueur x y) (prise-possible-bas tab joueur x y) (prise-possible-bas-gauche tab joueur x y) (prise-possible-gauche tab joueur x y) (prise-possible-haut-gauche tab joueur x y) (prise-possible-haut tab joueur x y) (prise-possible-haut-droite tab joueur x y))
+      (if (or (prise-possible-droite tab joueur x y)
+	      (prise-possible-bas-droite tab joueur x y)
+	      (prise-possible-bas tab joueur x y)
+	      (prise-possible-bas-gauche tab joueur x y)
+	      (prise-possible-gauche tab joueur x y)
+	      (prise-possible-haut-gauche tab joueur x y)
+	      (prise-possible-haut tab joueur x y)
+	      (prise-possible-haut-droite tab joueur x y))
 	  T
 	  NIL)
       NIL))
@@ -216,8 +221,9 @@
 ; jeu
 (defun othello()
   (let ((tab (init-tab)))
-    (setf (aref tab 5 4) 2)
-    (setf (aref tab 4 4) 2)
-    (setf (aref tab 3 4) 1)
-    (setf (aref tab 3 5) 1)
-    (jouer-coup tab 1 6 4)))
+    (jouer-coup tab 1 5 3)
+    (jouer-coup tab 2 5 2)
+    (jouer-coup tab 1 3 5)
+    (jouer-coup tab 2 2 5)
+    (jouer-coup tab 1 2 4)
+))
