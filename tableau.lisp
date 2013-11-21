@@ -285,8 +285,8 @@
 
 (defun fin-partie (tab)
   (do ((i 0 (+ i 1)) (j 0 (+ j 1))) ((and (= i 7) (= j 7)))
-    ((if (or (coup-valide tab 1 i j) (coup-valide tab 2 i j))
-	(return nil))))
+    (if (or (coup-valide tab 1 i j) (coup-valide tab 2 i j))
+	(return nil)))
     T)
 
 
