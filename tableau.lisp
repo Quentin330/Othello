@@ -295,8 +295,9 @@
 ; jeu
 (defun othello()
   (let ((tab (init-tab)) (l) (partiefinie NIL) (x 0) (y 0))
-    (do ((i 0 (+ i 1))(partiefinie))
-	((setf l (eval (read)))
+    (do ((i 0 (+ i 1)))(partiefinie)
+      (setf jeu (read))
+	(setf l (eval jeu))
 	 (setf x (car l))
 	 (setf y (cadr l))
 	 (if (coup-valide tab (+ (mod i 2) 1) x y)
@@ -308,5 +309,6 @@
 	     (progn
 	       (format t "partie finie ~%")
 	       (setf partiefinie T))
-	     )))))
+	     ))))
       
+;a faire : si qqn ne peut pas jouer, passer a l'autre (avec un message)
