@@ -284,10 +284,12 @@
 	    (setf (aref tab i j) joueur)))))
 
 (defun fin-partie (tab)
-  (do ((i 0 (+ i 1)) (j 0 (+ j 1))) ((and (= i 7) (= j 7)))
-    (if (or (coup-valide tab 1 i j) (coup-valide tab 2 i j))
-	(return nil)))
-    T)
+  (let ((bool T))
+    (do ((i 0 (+ i 1)))((= i 8))
+      (do ((j 0 (+ j 1)))((or (= j 8) (not bool)))
+	  (if (or (coup-valide tab 1 i j) (coup-valide tab 2 i j))
+		(setf bool nil))))
+    bool))
 
 
 ; jeu
@@ -303,5 +305,8 @@
 	       (format t "Coup non valide ~%")
 	       (setf i (+ i 1))))
 	 (if (fin-partie tab)
-	     (setf partiefinie T))))))
+	     (progn
+	       (format t "partie finie ~%")
+	       (setf partiefinie T))
+	     )))))
       
