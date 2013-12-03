@@ -343,3 +343,57 @@
 			      (write-char #\7)
 			      (if (= 7 y)
 				  (write-char #\8))))))))))
+
+(defun jouer-coup-ia2 (tab joueur)
+  (let ((x 8)(y 8)(max 0)(valcoup 0))
+    (if (not (ne-peut-pas-jouer tab joueur))
+	(progn
+	  (do ((i 0 (+ i 1)))((= i 8))
+	    (do ((j 0 (+ j 1)))((= j 8))
+	      (if (= (aref tab i j) 0)
+		  (if (coup-valide joueur i j)
+		      (progn
+			(setf valcoup (eval-coup-max-victoires tab joueur i j))
+			(if (> valcoup max)
+			  (progn
+			    (setf max valcoup)
+			    (setf x i)
+			    (setf y j))))))))
+	  (char-abscisse x)
+	  (char-ordonnee y)
+	  (jouer-coup tab joueur x y)
+	  )
+	)
+    ))
+
+(defun eval-coup-max-victoires (tab joueur i j)
+  (compter-victoires tab joueur i j))
+
+(defun compter-victoires (tab joueur i j)
+  (assert (coup-valide tab joueur i j))
+  (let ((tab2 tab))
+    (jouer-coup tab2 joueur i j)
+    (if (fin-partie tab2)
+	(progn
+	  (if (> (compter-pions tab2 joueur) (compter-pions tab2 (adversaire joueur)))
+	      1
+	      0))
+	(compter-victoires-2 tab2 joueur))))
+
+(defun compter-victoires-2 (tab joueur)
+  (let ((tab2 tab) (somme 0))
+    (do ((i 0 (+ i 1)))((= i 8))
+      (do ((j 0 (+ j 1)))((= j 8))
+	(if (coup-valide tab2 (adversaire joueur) i j)
+	    (progn
+	      (jouer-coup tab2 (adversaire joueur) i j)
+	      (if (fin-partie tab)
+		    (if (> (compter-pions tab2 joueur) (compter-pions tab2 (adversaire joueur)))
+			(setf somme (+ somme 1)))
+		    (do ((x 0 (+ x 1)))((= x 8))
+		      (do ((y 0 (+ y 1)))((= y 8))
+			(if (coup-valide tab2 joueur x y)
+			    (setf somme (+ somme compter-victoires tab2 joueur x y))))))
+	      (setf tab2 tab)))))
+    somme))
+    
