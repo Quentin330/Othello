@@ -2,7 +2,11 @@
 ; 1 si blanc
 ; 2 si noir
 ; 3 si triche
-; 6 si la famille
+
+; othello () -> jeu joueur contre joueur
+; main-contre-random-ia (first) -> jeu contre l'ia random, si first est true, l'ia commence
+; main-standalone (first) -> jeu contre l'ia, si first est true, l'ia commence
+; main-2-random-ia () -> jeu entre 2 ia random
 
 ; cree le tableau du debut de la partie
 (defun init-tab()
@@ -18,77 +22,14 @@
 
 ; affiche le tableau
 (defun show-tab(tab)
+  (format t "   A B C D E F G H~%")
   (dotimes (i 8)
+    (format t "~2D" (+ 1 i))
     (dotimes (j 8)
       (format t "~2D"
 	      (aref tab j i)))
     (format t "~%"))
   (format t "~%"))
-
-(defparameter a1 '(0 0))
-(defparameter a2 '(0 1))
-(defparameter a3 '(0 2))
-(defparameter a4 '(0 3))
-(defparameter a5 '(0 4))
-(defparameter a6 '(0 5))
-(defparameter a7 '(0 6))
-(defparameter a8 '(0 7))
-(defparameter b1 '(1 0))
-(defparameter b2 '(1 1))
-(defparameter b3 '(1 2))
-(defparameter b4 '(1 3))
-(defparameter b5 '(1 4))
-(defparameter b6 '(1 5))
-(defparameter b7 '(1 6))
-(defparameter b8 '(1 7))
-(defparameter c1 '(2 0))
-(defparameter c2 '(2 1))
-(defparameter c3 '(2 2))
-(defparameter c4 '(2 3))
-(defparameter c5 '(2 4))
-(defparameter c6 '(2 5))
-(defparameter c7 '(2 6))
-(defparameter c8 '(2 7))
-(defparameter d1 '(3 0))
-(defparameter d2 '(3 1))
-(defparameter d3 '(3 2))
-(defparameter d4 '(3 3))
-(defparameter d5 '(3 4))
-(defparameter d6 '(3 5))
-(defparameter d7 '(3 6))
-(defparameter d8 '(3 7))
-(defparameter e1 '(4 0))
-(defparameter e2 '(4 1))
-(defparameter e3 '(4 2))
-(defparameter e4 '(4 3))
-(defparameter e5 '(4 4))
-(defparameter e6 '(4 5))
-(defparameter e7 '(4 6))
-(defparameter e8 '(4 7))
-(defparameter f1 '(5 0))
-(defparameter f2 '(5 1))
-(defparameter f3 '(5 2))
-(defparameter f4 '(5 3))
-(defparameter f5 '(5 4))
-(defparameter f6 '(5 5))
-(defparameter f7 '(5 6))
-(defparameter f8 '(5 7))
-(defparameter g1 '(6 0))
-(defparameter g2 '(6 1))
-(defparameter g3 '(6 2))
-(defparameter g4 '(6 3))
-(defparameter g5 '(6 4))
-(defparameter g6 '(6 5))
-(defparameter g7 '(6 6))
-(defparameter g8 '(6 7))
-(defparameter h1 '(7 0))
-(defparameter h2 '(7 1))
-(defparameter h3 '(7 2))
-(defparameter h4 '(7 3))
-(defparameter h5 '(7 4))
-(defparameter h6 '(7 5))
-(defparameter h7 '(7 6))
-(defparameter h8 '(7 7))
 
 
 ; boolean
@@ -225,7 +166,6 @@
   (assert (coup-valide tab joueur x y))
   (setf (aref tab x y) joueur)
   (prise tab joueur x y)
-  (show-tab tab)
 )
 
 (defun prise (tab joueur x y)
@@ -283,31 +223,270 @@
 	    (setf i 7)
 	    (setf (aref tab i j) joueur)))))
 
+
+
 (defun fin-partie (tab)
+  (and (ne-peut-pas-jouer tab 1) (ne-peut-pas-jouer tab 2)))
+
+(defun ne-peut-pas-jouer (tab joueur)
   (let ((bool T))
     (do ((i 0 (+ i 1)))((= i 8))
       (do ((j 0 (+ j 1)))((or (= j 8) (not bool)))
-	  (if (or (coup-valide tab 1 i j) (coup-valide tab 2 i j))
-		(setf bool nil))))
+	(if (coup-valide tab joueur i j)
+	    (setf bool nil))))
     bool))
+
+(defun convert-abscisse ()
+  (let ((abscisse (read-char)))
+    (if (char-equal abscisse #\Newline)
+	(setf abscisse (read-char)))
+    (if (char-equal abscisse #\a)
+	0
+	(if (char-equal abscisse #\b)
+	    1
+	    (if (char-equal abscisse #\c)
+		2
+		(if (char-equal abscisse #\d)
+		    3
+		    (if (char-equal abscisse #\e)
+			4
+			(if (char-equal abscisse #\f)
+			    5
+			    (if (char-equal abscisse #\g)
+				6
+				(if (char-equal abscisse #\h)
+				    7
+				    8))))))))))
+
+(defun convert-ordonnee ()
+  (let ((ordonnee (read-char)))
+  (if (char-equal ordonnee #\1)
+      0
+      (if (char-equal ordonnee #\2)
+	  1
+	  (if (char-equal ordonnee #\3)
+	      2
+	      (if (char-equal ordonnee #\4)
+		  3
+		  (if (char-equal ordonnee #\5)
+		      4
+		      (if (char-equal ordonnee #\6)
+			  5
+			  (if (char-equal ordonnee #\7)
+			      6
+			      (if (char-equal ordonnee #\8)
+				  7
+				  8))))))))))
 
 
 ; jeu
 (defun othello()
-  (let ((tab (init-tab)) (l) (partiefinie NIL) (x 0) (y 0))
+  (let ((tab (init-tab)) (partiefinie NIL) (x 0) (y 0))
+    (show-tab tab)
     (do ((i 0 (+ i 1)))(partiefinie)
-	(setf l (eval (read)))
-	 (setf x (car l))
-	 (setf y (cadr l))
-	 (if (coup-valide tab (+ (mod i 2) 1) x y)
-	     (jouer-coup tab (+ (mod i 2) 1) x y)
-	     (progn 
-	       (format t "Coup non valide ~%")
-	       (setf i (+ i 1))))
-	 (if (fin-partie tab)
-	     (progn
-	       (format t "partie finie ~%")
-	       (setf partiefinie T))
-	     ))))
-      
-;a faire : si qqn ne peut pas jouer, passer a l'autre (avec un message)
+      (if (ne-peut-pas-jouer tab (+ (mod i 2) 1))
+	  (format t "le joueur ne peut pas jouer, au joueur suivant ~%")
+	  (progn
+	    (setf x (convert-abscisse))
+	    (setf y (convert-ordonnee))
+	    (if (coup-valide tab (+ (mod i 2) 1) x y)
+		(progn
+		  (jouer-coup tab (+ (mod i 2) 1) x y)
+		  (show-tab tab))
+		(progn 
+		  (format t "Coup non valide ~%")
+		  (setf i (+ i 1))))))
+      (if (fin-partie tab)
+	  (progn
+	    (format t "partie finie ~%")
+	    (setf partiefinie T)
+	    (if (= (compter-pions tab 1) (compter-pions tab 2))
+		  (format t "Egalité ~%")
+		  (if (> (compter-pions tab 1) (compter-pions tab 2))
+		      (format t "Le joueur 1 a gagné ~%")
+		      (if (< (compter-pions tab 1) (compter-pions tab 2))
+			  (format t "Le joueur 2 a gagné ~%")))))
+	  ))))
+
+(defun jouer-coup-random-ia (tab joueur)
+  (let ((x 8)(y 8))
+    (if (not (ne-peut-pas-jouer tab joueur))
+	(progn
+	  (do ((i 0 (+ i 1)))((coup-valide tab joueur x y))
+	    (setf x (random 8))
+	    (setf y (random 8)))
+	  (char-abscisse x)
+	  (char-ordonnee y)
+          (format t "~% l'ia joue ~%")
+	  (jouer-coup tab joueur x y)
+	  (show-tab tab)
+	  )
+	(format t "l'ia ne peut pas jouer ~%")
+	)
+    ))
+
+;TODO
+(defun jouer-coup-ia (tab joueur)
+  (let ((x 8)(y 8))
+    (if (not (ne-peut-pas-jouer tab joueur))
+	(progn
+	  (do ((i 0 (+ i 1)))((coup-valide tab joueur x y))
+	    (setf x (random 8))
+	    (setf y (random 8)))
+	  (char-abscisse x)
+	  (char-ordonnee y)
+	  (jouer-coup tab joueur x y)
+	  )
+	)
+    ))
+
+;TODO
+(defun lire-coup (tab joueur)
+  (let ((coupvalide NIL) (x 0) (y 0))
+    (if (not (ne-peut-pas-jouer tab joueur))
+	(progn
+	  (do ()(coupvalide)
+	    (setf x (convert-abscisse))
+	    (setf y (convert-ordonnee))
+	    (if (coup-valide tab joueur x y)
+		(progn
+		  (jouer-coup tab joueur x y)
+		  (setf coupvalide T))
+		))
+	  (setf coupvalide NIL))
+	)))
+
+(defun jouer-coup-joueur (tab joueur)
+  (let ((coupvalide NIL) (x 0) (y 0))
+    (if (not (ne-peut-pas-jouer tab joueur))
+	(progn
+	  (format t "à vous de jouer ~%")
+	  (do ()(coupvalide)
+	    (setf x (convert-abscisse))
+	    (setf y (convert-ordonnee))
+	    (if (coup-valide tab joueur x y)
+		(progn
+		  (jouer-coup tab joueur x y)
+		  (show-tab tab)
+		  (setf coupvalide T))
+		(format t "Coup non valide ~%")
+		))
+	  (setf coupvalide NIL))
+	(format t "le joueur ne peut pas jouer ~%")
+	)))
+
+(defun main-contre-random-ia (first)
+  (let ((tab (init-tab)) (partiefinie NIL))
+    (show-tab tab)
+    (if first
+	(do ((i 0 (+ i 1)))(partiefinie)
+	  (jouer-coup-random-ia tab 1)
+	  (jouer-coup-joueur tab 2)
+	  (if (fin-partie tab)
+	      (progn
+		(format t "partie finie ~%")
+		(setf partiefinie T)
+		(if (= (compter-pions tab 1) (compter-pions tab 2))
+		    (format t "Egalité ~%")
+		    (if (> (compter-pions tab 1) (compter-pions tab 2))
+			(format t "L'IA a gagné ~%")
+			(if (< (compter-pions tab 1) (compter-pions tab 2))
+			    (format t "Le joueur a gagné ~%")))))
+	      ))
+	(do ((i 0 (+ i 1)))(partiefinie)
+	  (jouer-coup-joueur tab 1)
+	  (jouer-coup-random-ia tab 2)
+	  (if (fin-partie tab)
+	      (progn
+		(format t "partie finie ~%")
+		(setf partiefinie T)
+		(if (= (compter-pions tab 1) (compter-pions tab 2))
+		    (format t "Egalité ~%")
+		    (if (> (compter-pions tab 1) (compter-pions tab 2))
+			(format t "Le joueur a gagné ~%")
+			(if (< (compter-pions tab 1) (compter-pions tab 2))
+			    (format t "L'IA a gagné ~%"))))))))))
+
+(defun main-2-random-ia ()
+  (let ((tab (init-tab)) (partiefinie NIL))
+    (show-tab tab)
+	(do ((i 0 (+ i 1)))(partiefinie)
+	  (jouer-coup-random-ia tab 1)
+	  (jouer-coup-random-ia tab 2)
+	  (if (fin-partie tab)
+	      (progn
+		(format t "partie finie ~%")
+		(setf partiefinie T)
+		(if (= (compter-pions tab 1) (compter-pions tab 2))
+		    (format t "Egalité ~%")
+		    (if (> (compter-pions tab 1) (compter-pions tab 2))
+			(format t "L'IA 1 a gagné ~%")
+			(if (< (compter-pions tab 1) (compter-pions tab 2))
+			    (format t "L'IA 2 a gagné ~%")))))))))
+
+(defun compter-pions (tab joueur)
+  (let ((pions 0))
+    (do ((i 0 (+ i 1)))((= i 8))
+      (do ((j 0 (+ j 1)))((= j 8))
+	(if (= (aref tab i j) joueur)
+	    (setf pions (+ pions 1)))))
+    pions))
+
+(defun main-standalone (first)
+  (let ((tab (init-tab)) (partiefinie NIL))
+    (if first
+	(do ((i 0 (+ i 1)))(partiefinie)
+	  (jouer-coup-ia tab 1)
+	  (lire-coup tab 2)
+	  (if (fin-partie tab)
+		(setf partiefinie T)))
+	(do ((i 0 (+ i 1)))(partiefinie)
+	  (lire-coup tab 1)
+	  (jouer-coup-random-ia tab 2)
+	  (if (fin-partie tab)
+		(setf partiefinie T)
+	      )))))
+
+
+(defun char-abscisse (x)
+  (assert (and (< x 8) (>= x 0)))
+  (if (= 0 x)
+      (write-char #\A)
+      (if (= 1 x)
+	  (write-char #\B)
+	  (if (= 2 x)
+	      (write-char #\C)
+	      (if (= 3 x)
+		  (write-char #\D)
+		  (if (= 4 x)
+		      (write-char #\E)
+		      (if (= 5 x)
+			  (write-char #\F)
+			  (if (= 6 x)
+			      (write-char #\G)
+			      (if (= 7 x)
+				  (write-char #\H))))))))))
+
+
+(defun char-ordonnee (y)
+  (assert (and (< y 8) (>= y 0)))
+  (if (= 0 y)
+      (write-char #\1)
+      (if (= 1 y)
+	  (write-char #\2)
+	  (if (= 2 y)
+	      (write-char #\3)
+	      (if (= 3 y)
+		  (write-char #\4)
+		  (if (= 4 y)
+		      (write-char #\5)
+		      (if (= 5 y)
+			  (write-char #\6)
+			  (if (= 6 y)
+			      (write-char #\7)
+			      (if (= 7 y)
+				  (write-char #\8))))))))))
+
+
+  
+  
