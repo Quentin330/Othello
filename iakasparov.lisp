@@ -1,14 +1,18 @@
-; 0 si vide
-; 1 si blanc
-; 2 si noir
-; 3 si triche
+(defun main-standalone (first)
+  (let ((tab (init-tab)) (partiefinie NIL))
+    (if first
+	(do ((i 0 (+ i 1)))(partiefinie)
+	  (jouer-coup-ia tab 1)
+	  (lire-coup tab 2)
+	  (if (fin-partie tab)
+		(setf partiefinie T)))
+	(do ((i 0 (+ i 1)))(partiefinie)
+	  (lire-coup tab 1)
+	  (jouer-coup-ia tab 2)
+	  (if (fin-partie tab)
+		(setf partiefinie T)
+	      )))))
 
-; othello () -> jeu joueur contre joueur
-; main-contre-random-ia (first) -> jeu contre l'ia random, si first est true, l'ia commence
-; main-standalone (first) -> jeu contre l'ia, si first est true, l'ia commence
-; main-2-random-ia () -> jeu entre 2 ia random
-
-; cree le tableau du debut de la partie
 (defun init-tab()
   (make-array '(8 8) :initial-contents
 	      '((0 0 0 0 0 0 0 0)
@@ -20,19 +24,6 @@
 		(0 0 0 0 0 0 0 0)
 		(0 0 0 0 0 0 0 0))))
 
-; affiche le tableau
-(defun show-tab(tab)
-  (format t "   A B C D E F G H~%")
-  (dotimes (i 8)
-    (format t "~2D" (+ 1 i))
-    (dotimes (j 8)
-      (format t "~2D"
-	      (aref tab j i)))
-    (format t "~%"))
-  (format t "~%"))
-
-
-; boolean
 (defun coup-valide(tab joueur x y)
   (if (case-vide tab x y)
       (if (or (prise-possible-droite tab joueur x y)
@@ -223,8 +214,6 @@
 	    (setf i 7)
 	    (setf (aref tab i j) joueur)))))
 
-
-
 (defun fin-partie (tab)
   (and (ne-peut-pas-jouer tab 1) (ne-peut-pas-jouer tab 2)))
 
@@ -278,53 +267,6 @@
 				  7
 				  8))))))))))
 
-
-; jeu
-(defun othello()
-  (let ((tab (init-tab)) (partiefinie NIL) (x 0) (y 0))
-    (show-tab tab)
-    (do ((i 0 (+ i 1)))(partiefinie)
-      (if (ne-peut-pas-jouer tab (+ (mod i 2) 1))
-	  (format t "le joueur ne peut pas jouer, au joueur suivant ~%")
-	  (progn
-	    (setf x (convert-abscisse))
-	    (setf y (convert-ordonnee))
-	    (if (coup-valide tab (+ (mod i 2) 1) x y)
-		(progn
-		  (jouer-coup tab (+ (mod i 2) 1) x y)
-		  (show-tab tab))
-		(progn 
-		  (format t "Coup non valide ~%")
-		  (setf i (+ i 1))))))
-      (if (fin-partie tab)
-	  (progn
-	    (format t "partie finie ~%")
-	    (setf partiefinie T)
-	    (if (= (compter-pions tab 1) (compter-pions tab 2))
-		  (format t "Egalité ~%")
-		  (if (> (compter-pions tab 1) (compter-pions tab 2))
-		      (format t "Le joueur 1 a gagné ~%")
-		      (if (< (compter-pions tab 1) (compter-pions tab 2))
-			  (format t "Le joueur 2 a gagné ~%")))))
-	  ))))
-
-(defun jouer-coup-random-ia (tab joueur)
-  (let ((x 8)(y 8))
-    (if (not (ne-peut-pas-jouer tab joueur))
-	(progn
-	  (do ((i 0 (+ i 1)))((coup-valide tab joueur x y))
-	    (setf x (random 8))
-	    (setf y (random 8)))
-	  (char-abscisse x)
-	  (char-ordonnee y)
-          (format t "~% l'ia joue ~%")
-	  (jouer-coup tab joueur x y)
-	  (show-tab tab)
-	  )
-	(format t "l'ia ne peut pas jouer ~%")
-	)
-    ))
-
 ;TODO
 (defun jouer-coup-ia (tab joueur)
   (let ((x 8)(y 8))
@@ -340,7 +282,6 @@
 	)
     ))
 
-;TODO
 (defun lire-coup (tab joueur)
   (let ((coupvalide NIL) (x 0) (y 0))
     (if (not (ne-peut-pas-jouer tab joueur))
@@ -355,74 +296,6 @@
 		))
 	  (setf coupvalide NIL))
 	)))
-
-(defun jouer-coup-joueur (tab joueur)
-  (let ((coupvalide NIL) (x 0) (y 0))
-    (if (not (ne-peut-pas-jouer tab joueur))
-	(progn
-	  (format t "à vous de jouer ~%")
-	  (do ()(coupvalide)
-	    (setf x (convert-abscisse))
-	    (setf y (convert-ordonnee))
-	    (if (coup-valide tab joueur x y)
-		(progn
-		  (jouer-coup tab joueur x y)
-		  (show-tab tab)
-		  (setf coupvalide T))
-		(format t "Coup non valide ~%")
-		))
-	  (setf coupvalide NIL))
-	(format t "le joueur ne peut pas jouer ~%")
-	)))
-
-(defun main-contre-random-ia (first)
-  (let ((tab (init-tab)) (partiefinie NIL))
-    (show-tab tab)
-    (if first
-	(do ((i 0 (+ i 1)))(partiefinie)
-	  (jouer-coup-random-ia tab 1)
-	  (jouer-coup-joueur tab 2)
-	  (if (fin-partie tab)
-	      (progn
-		(format t "partie finie ~%")
-		(setf partiefinie T)
-		(if (= (compter-pions tab 1) (compter-pions tab 2))
-		    (format t "Egalité ~%")
-		    (if (> (compter-pions tab 1) (compter-pions tab 2))
-			(format t "L'IA a gagné ~%")
-			(if (< (compter-pions tab 1) (compter-pions tab 2))
-			    (format t "Le joueur a gagné ~%")))))
-	      ))
-	(do ((i 0 (+ i 1)))(partiefinie)
-	  (jouer-coup-joueur tab 1)
-	  (jouer-coup-random-ia tab 2)
-	  (if (fin-partie tab)
-	      (progn
-		(format t "partie finie ~%")
-		(setf partiefinie T)
-		(if (= (compter-pions tab 1) (compter-pions tab 2))
-		    (format t "Egalité ~%")
-		    (if (> (compter-pions tab 1) (compter-pions tab 2))
-			(format t "Le joueur a gagné ~%")
-			(if (< (compter-pions tab 1) (compter-pions tab 2))
-			    (format t "L'IA a gagné ~%"))))))))))
-
-(defun main-2-random-ia ()
-  (let ((tab (init-tab)) (partiefinie NIL))
-    (show-tab tab)
-	(do ((i 0 (+ i 1)))(partiefinie)
-	  (jouer-coup-random-ia tab 1)
-	  (jouer-coup-random-ia tab 2)
-	  (if (fin-partie tab)
-	      (progn
-		(format t "partie finie ~%")
-		(setf partiefinie T)
-		(if (= (compter-pions tab 1) (compter-pions tab 2))
-		    (format t "Egalité ~%")
-		    (if (> (compter-pions tab 1) (compter-pions tab 2))
-			(format t "L'IA 1 a gagné ~%")
-			(if (< (compter-pions tab 1) (compter-pions tab 2))
-			    (format t "L'IA 2 a gagné ~%")))))))))
 
 (defun compter-pions (tab joueur)
   (let ((pions 0))
@@ -470,7 +343,3 @@
 			      (write-char #\7)
 			      (if (= 7 y)
 				  (write-char #\8))))))))))
-
-
-  
-  
