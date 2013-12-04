@@ -1,23 +1,5 @@
-;pour tester erreur:
-;(defparameter *tab* (make-array '(8 8) :initial-contents
-;					 '((0 0 2 1 1 1 1 1)
-;					   (0 1 1 1 1 2 2 2)
-;					   (1 1 1 1 1 1 2 1)
-;					   (1 1 1 1 1 1 2 1)
-;					   (2 2 1 1 1 1 2 1)
-;					   (2 2 1 1 1 1 2 1)
-;					   (2 2 2 2 2 2 2 0)
-;					   (2 2 2 2 1 1 0 0))))
-;
-;
-;CL-USER> (jouer-coup-ia *tab* 1 3)
-;
-;
-
-
-;
 (defparameter valeurvictoire 1000)
-(defparameter profondeur 3)
+(defparameter profondeur 4)
 
 (defun main-affichage (first)
   (let ((tab (init-tab)) (partiefinie NIL))
@@ -205,9 +187,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun jouer-coup (tab joueur x y)
-  ;(format t "Test coup : ~D, ~D~%" x y)
   (assert (coup-valide tab joueur x y))
-  ;(format t "Coup : ~D, ~D~%" x y)
   (setf (aref tab x y) joueur)
   (prise tab joueur x y)
 )
@@ -398,22 +378,16 @@
 				  (write-char #\8))))))))))
 
 (defun jouer-coup-ia (tab joueur profondeur &key(affichage T))
-  ;(if (= 0 profondeur)
-      (format t "appel avec joueur ~D, pronfondeur : ~D~%" joueur profondeur);)
-  (show-tab tab)
   (let ((x 8)(y 8)(max 0)(valcoup 0))
     (if (not (ne-peut-pas-jouer tab joueur))
 	(progn
 	  (do ((i 0 (+ i 1)))((= i 8))
 	    (do ((j 0 (+ j 1)))((= j 8))
 	      (if (= (aref tab i j) 0)
-		 ; (if (= 0 profondeur)
-		 ;     (format t "case vide : ~D ~D~%" i j))
 		  (if (coup-valide tab joueur i j)
 		      (progn
-		;	(if (= 0 profondeur)
-		;	    (format t "coup valide : ~D ~D~%" i j))
 			(setf valcoup (eval-coup tab joueur profondeur i j))
+		        
 			(if (> valcoup max)
 			    (progn
 			      (setf max valcoup)
@@ -424,9 +398,7 @@
 		(char-abscisse x)
 		(char-ordonnee y)))
 	  (jouer-coup tab joueur x y)
-	  )
-	)
-    ))
+	  ))))
 
 (defun eval-coup (tab joueur profondeur i j)
   (let ((tab2 (clone tab))(nbrcoups 0)(sommecoups 0))
@@ -434,8 +406,8 @@
     (if (fin-partie tab2)
 	(if (victoire tab2 joueur)
 	    valeurvictoire
-	    0)
-	(if (= profondeur 0)
+	    1)
+	(if (or (= profondeur 0) (= profondeur -1)) 
 	    (eval-tab tab2 joueur)
 	    (progn
 	      (jouer-coup-ia tab2 (adversaire joueur) (- profondeur 1) :affichage NIL)
@@ -443,10 +415,10 @@
 		(do ((y 0 (+ y 1)))((= y 8))
 		  (if (coup-valide tab2 joueur x y)
 		      (progn
-			(setf sommecoups (+ sommecoups (eval-coup tab2 joueur (- profondeur 1) x y)))
+			(setf sommecoups (+ sommecoups (eval-coup tab2 joueur (- profondeur 2) x y)))
 			(setf nbrcoups (+ nbrcoups 1))))))
 	      (if (= nbrcoups 0)
-		  0
+		  1
 		  (/ sommecoups nbrcoups)))))))
 		      
 	
