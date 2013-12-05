@@ -1,6 +1,5 @@
 (defparameter valeurvictoire 1000)
 (defparameter profondeur 4)
-(defparameter nbrtests 1000)
 
 (defun main-affichage (first)
   (let ((tab (init-tab)) (partiefinie NIL))
@@ -8,7 +7,7 @@
     (if first
 	(do ((i 0 (+ i 1)))(partiefinie)
 	  (format t "L'ia joue en : ")
-	  (jouer-coup-ia tab 1 profondeur)
+	  (jouer-coup-ia-best-adv tab 1 profondeur)
 	  (show-tab tab)
 	  (format t "à vous de jouer (joueur 2) : ")
 	  (lire-coup tab 2 :affichage T)
@@ -26,7 +25,7 @@
 	  (lire-coup tab 1 :affichage T)
 	  (show-tab tab)
 	  (format t "L'ia joue en : ")
-	  (jouer-coup-ia tab 2 profondeur)
+	  (jouer-coup-ia-best-adv tab 2 profondeur)
 	  (show-tab tab)
 	  (if (fin-partie tab)
 	      (progn
@@ -37,12 +36,49 @@
 			(format t "L'IA a gagné ~%")
 			(format t "Egalité ~%")))))))))
 
-(defun main-test ()
+(defun test-temps-de-reponse (nbrtests)
+  (let ((tab (init-tab)) (partiefinie NIL) (begintime 0) (endtime 0) (nbrovertime 0) (nbrcoups 0))
+    (do ((i 0 (+ i 1)))((= i nbrtests))
+      (do ((j 0 (+ j 1)))(partiefinie)
+	(setf begintime (get-universal-time))
+	(jouer-coup-ia-best-adv tab 1 profondeur :ecrirecoup NIL)
+	(setf endtime (get-universal-time))
+	(setf nbrcoups (+ 1 nbrcoups))
+	(jouer-coup-random tab 2 :ecrirecoup NIL)
+	(if (> (- endtime begintime) 1)
+	    (progn
+	      (format t "/!\ TEMPS DEPASSE /!\ (~D secondes)~%" (- endtime begintime))
+	      (setf nbrovertime (+ nbrovertime 1))))
+	(if (fin-partie tab)
+	    (progn
+	      (setf partiefinie T))))
+      (setf tab (init-tab))
+      (setf partiefinie NIL))
+    (do ((i 0 (+ i 1)))((= i nbrtests))
+      (do ((j 0 (+ j 1)))(partiefinie)
+	(jouer-coup-random tab 1 :ecrirecoup NIL)
+	(setf begintime (get-universal-time))
+	(jouer-coup-ia-best-adv tab 2 profondeur :ecrirecoup NIL)
+	(setf endtime (get-universal-time))
+	(setf nbrcoups (+ 1 nbrcoups))
+	(if (> (- endtime begintime) 1)
+	    (progn
+	      (format t "/!\ TEMPS DEPASSE /!\ (~D secondes)~%" (- endtime begintime))
+	      (setf nbrovertime (+ nbrovertime 1))))
+	(if (fin-partie tab)
+	    (progn
+	      (setf partiefinie T))))
+      (setf tab (init-tab))
+      (setf partiefinie NIL))
+    (format t "Sur ~D coups de l'IA dans ~D parties, le temps a été dépassé ~D fois~%" nbrcoups (* 2 nbrtests) nbrovertime)
+    ))
+
+(defun test-strategie (nbrtests)
   (let ((tab (init-tab)) (partiefinie NIL) (win 0) (win1 0) (win2 0))
     (do ((i 0 (+ i 1)))((= i nbrtests))
       (do ((j 0 (+ j 1)))(partiefinie)
 	(format t "Partie ~D coup ~D~%" (+ 1 i) (+ 1 (* 2 j)))
-	(jouer-coup-ia tab 1 profondeur :ecrirecoup NIL)
+	(jouer-coup-ia-best-adv tab 1 profondeur :ecrirecoup NIL)
 	(format t "Partie ~D coup ~D~%" (+ 1 i) (+ 2 (* 2 j)))
 	(jouer-coup-random tab 2 :ecrirecoup NIL)
 	(if (fin-partie tab)
@@ -62,7 +98,7 @@
 	(format t "Partie ~D coup ~D~%" (+ 1 (+ nbrtests i)) (+ 1 (* 2 j)))
 	(jouer-coup-random tab 1 :ecrirecoup NIL)
 	(format t "Partie ~D coup ~D~%" (+ 1 (+ nbrtests i)) (+ 2 (* 2 j)))
-	(jouer-coup-ia tab 2 profondeur :ecrirecoup NIL)
+	(jouer-coup-ia-best-adv tab 2 profondeur :ecrirecoup NIL)
 	(if (fin-partie tab)
 	    (progn
 	      (setf partiefinie T)
@@ -84,13 +120,13 @@
   (let ((tab (init-tab)) (partiefinie NIL))
     (if first
 	(do ((i 0 (+ i 1)))(partiefinie)
-	  (jouer-coup-ia tab 1 profondeur)
+	  (jouer-coup-ia-best-adv tab 1 profondeur)
 	  (lire-coup tab 2)
 	  (if (fin-partie tab)
 		(setf partiefinie T)))
 	(do ((i 0 (+ i 1)))(partiefinie)
 	  (lire-coup tab 1)
-	  (jouer-coup-ia tab 2 profondeur)
+	  (jouer-coup-ia-best-adv tab 2 profondeur)
 	  (if (fin-partie tab)
 		(setf partiefinie T)
 	      )))))
@@ -304,10 +340,15 @@
 	    (setf bool nil))))
     bool))
 
+(defun isspace (char)
+  (if (or (char-equal char #\Newline) (char-equal char #\Space) (char-equal char #\Tab) (char-equal char #\Backspace)  (char-equal char #\Return) (char-equal char #\Linefeed))
+      T
+      NIL))
+
 (defun convert-abscisse ()
   (let ((abscisse (read-char)))
-    (if (char-equal abscisse #\Newline)
-	(setf abscisse (read-char)))
+    (if (isspace abscisse)
+	(convert-abscisse))
     (if (char-equal abscisse #\a)
 	0
 	(if (char-equal abscisse #\b)
@@ -328,6 +369,8 @@
 
 (defun convert-ordonnee ()
   (let ((ordonnee (read-char)))
+    (if (isspace ordonnee)
+	(convert-ordonnee))
   (if (char-equal ordonnee #\1)
       0
       (if (char-equal ordonnee #\2)
@@ -429,7 +472,8 @@
 			      (if (= 7 y)
 				  (write-char #\8))))))))))
 
-(defun jouer-coup-ia (tab joueur profondeur &key(ecrirecoup T) (affichage NIL))
+;Jouer coup de l'IA avec choix des meilleurs coups de l'adversaire
+(defun jouer-coup-ia-best-adv (tab joueur profondeur &key(ecrirecoup T) (affichage NIL))
   (let ((x 8)(y 8)(max 0)(valcoup 0))
     (if (not (ne-peut-pas-jouer tab joueur))
 	(progn
@@ -438,7 +482,7 @@
 	      (if (= (aref tab i j) 0)
 		  (if (coup-valide tab joueur i j)
 		      (progn
-			(setf valcoup (eval-coup tab joueur profondeur i j))
+			(setf valcoup (eval-coup-best-adv tab joueur profondeur i j))
 		        
 			(if (> valcoup max)
 			    (progn
@@ -454,7 +498,8 @@
 	(if affichage
 	    (format t "L'ia ne peut pas jouer~%")))))
 
-(defun eval-coup (tab joueur profondeur i j)
+;Evalue un coup avec choix des meilleurs coups de l'adversaire
+(defun eval-coup-best-adv (tab joueur profondeur i j)
   (let ((tab2 (clone tab))(nbrcoups 0)(sommecoups 0))
     (jouer-coup tab2 joueur i j)
     (if (fin-partie tab2)
@@ -464,16 +509,19 @@
 	(if (or (= profondeur 0) (= profondeur -1)) 
 	    (eval-tab tab2 joueur)
 	    (progn
-	      (jouer-coup-ia tab2 (adversaire joueur) (- profondeur 1) :ecrirecoup NIL)
+	      (jouer-coup-ia-best-adv tab2 (adversaire joueur) (- profondeur 1) :ecrirecoup NIL)
 	      (do ((x 0 (+ x 1)))((= x 8))
 		(do ((y 0 (+ y 1)))((= y 8))
 		  (if (coup-valide tab2 joueur x y)
 		      (progn
-			(setf sommecoups (+ sommecoups (eval-coup tab2 joueur (- profondeur 2) x y)))
+			(setf sommecoups (+ sommecoups (eval-coup-best-adv tab2 joueur (- profondeur 2) x y)))
 			(setf nbrcoups (+ nbrcoups 1))))))
 	      (if (= nbrcoups 0)
 		  1
 		  (/ sommecoups nbrcoups)))))))
+
+;TODO Jouer coup de l'IA avec tous les coups de l'adversaire
+;(defun jouer-coup-ia-all-adv (tab joueur profondeur &key(ecrirecoup T) (affichage NIL))
 		      
 	
 
