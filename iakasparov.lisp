@@ -1,13 +1,17 @@
 (defparameter valeurvictoire 1000)
 (defparameter profondeur 4)
 
+;strategies
+(defparameter alladv 1)
+(defparameter bestadv 0)
+
 (defun main-affichage (first)
   (let ((tab (init-tab)) (partiefinie NIL))
     (show-tab tab)
     (if first
 	(do ((i 0 (+ i 1)))(partiefinie)
 	  (format t "L'ia joue en : ")
-	  (jouer-coup-ia-best-adv tab 1 profondeur)
+	  (jouer-coup-ia tab 1 profondeur)
 	  (show-tab tab)
 	  (format t "à vous de jouer (joueur 2) : ")
 	  (lire-coup tab 2 :affichage T)
@@ -25,7 +29,7 @@
 	  (lire-coup tab 1 :affichage T)
 	  (show-tab tab)
 	  (format t "L'ia joue en : ")
-	  (jouer-coup-ia-best-adv tab 2 profondeur)
+	  (jouer-coup-ia tab 2 profondeur)
 	  (show-tab tab)
 	  (if (fin-partie tab)
 	      (progn
@@ -36,12 +40,12 @@
 			(format t "L'IA a gagné ~%")
 			(format t "Egalité ~%")))))))))
 
-(defun test-temps-de-reponse (nbrtests)
+(defun test-temps-de-reponse (nbrtests strat)
   (let ((tab (init-tab)) (partiefinie NIL) (begintime 0) (endtime 0) (nbrovertime 0) (nbrcoups 0))
     (do ((i 0 (+ i 1)))((= i nbrtests))
       (do ((j 0 (+ j 1)))(partiefinie)
 	(setf begintime (get-universal-time))
-	(jouer-coup-ia-best-adv tab 1 profondeur :ecrirecoup NIL)
+	(jouer-coup-ia tab 1 profondeur :ecrirecoup NIL :strat strat)
 	(setf endtime (get-universal-time))
 	(setf nbrcoups (+ 1 nbrcoups))
 	(jouer-coup-random tab 2 :ecrirecoup NIL)
@@ -58,7 +62,7 @@
       (do ((j 0 (+ j 1)))(partiefinie)
 	(jouer-coup-random tab 1 :ecrirecoup NIL)
 	(setf begintime (get-universal-time))
-	(jouer-coup-ia-best-adv tab 2 profondeur :ecrirecoup NIL)
+	(jouer-coup-ia tab 2 profondeur :ecrirecoup NIL :strat strat)
 	(setf endtime (get-universal-time))
 	(setf nbrcoups (+ 1 nbrcoups))
 	(if (> (- endtime begintime) 1)
@@ -73,12 +77,12 @@
     (format t "Sur ~D coups de l'IA dans ~D parties, le temps a été dépassé ~D fois~%" nbrcoups (* 2 nbrtests) nbrovertime)
     ))
 
-(defun test-strategie (nbrtests)
+(defun test-strategie (nbrtests strat)
   (let ((tab (init-tab)) (partiefinie NIL) (win 0) (win1 0) (win2 0))
     (do ((i 0 (+ i 1)))((= i nbrtests))
       (do ((j 0 (+ j 1)))(partiefinie)
 	(format t "Partie ~D coup ~D~%" (+ 1 i) (+ 1 (* 2 j)))
-	(jouer-coup-ia-best-adv tab 1 profondeur :ecrirecoup NIL)
+	(jouer-coup-ia tab 1 profondeur :ecrirecoup NIL :strat strat)
 	(format t "Partie ~D coup ~D~%" (+ 1 i) (+ 2 (* 2 j)))
 	(jouer-coup-random tab 2 :ecrirecoup NIL)
 	(if (fin-partie tab)
@@ -98,7 +102,7 @@
 	(format t "Partie ~D coup ~D~%" (+ 1 (+ nbrtests i)) (+ 1 (* 2 j)))
 	(jouer-coup-random tab 1 :ecrirecoup NIL)
 	(format t "Partie ~D coup ~D~%" (+ 1 (+ nbrtests i)) (+ 2 (* 2 j)))
-	(jouer-coup-ia-best-adv tab 2 profondeur :ecrirecoup NIL)
+	(jouer-coup-ia tab 2 profondeur :ecrirecoup NIL :strat strat)
 	(if (fin-partie tab)
 	    (progn
 	      (setf partiefinie T)
@@ -120,13 +124,13 @@
   (let ((tab (init-tab)) (partiefinie NIL))
     (if first
 	(do ((i 0 (+ i 1)))(partiefinie)
-	  (jouer-coup-ia-best-adv tab 1 profondeur)
+	  (jouer-coup-ia tab 1 profondeur)
 	  (lire-coup tab 2)
 	  (if (fin-partie tab)
 		(setf partiefinie T)))
 	(do ((i 0 (+ i 1)))(partiefinie)
 	  (lire-coup tab 1)
-	  (jouer-coup-ia-best-adv tab 2 profondeur)
+	  (jouer-coup-ia tab 2 profondeur)
 	  (if (fin-partie tab)
 		(setf partiefinie T)
 	      )))))
@@ -329,16 +333,131 @@
 	    (setf i 7)
 	    (setf (aref tab i j) joueur)))))
 
-(defun fin-partie (tab)
-  (and (ne-peut-pas-jouer tab 1) (ne-peut-pas-jouer tab 2)))
+;TODO : ne pas utiliser prise-possible (aller dans la direction, si on revoit notre couleur on revient), renvoit NIL si aucun changement, T sinon
+(defun jouer-coup-sans-test (tab joueur x y)
+  (let ((tab1 (clone tab))(changed T))
+	(if (= 0 (aref tab x y))
+	    (progn
+	      (setf (aref tab x y) joueur)
+;droite
+	      (if (= (adversaire joueur) (aref tab (+ 1 x) y))
+		  (do ((i (+ 1 x) (+ 1 i)))((> i 6))
+		    (if (= (aref tab i y) 0)
+			(setf i 7)
+			(if (= joueur (aref tab i y))
+			    (progn
+			      (setf changed T)
+			      (do ((j (- i 1) (- j 1)))((= x j))
+				(setf (aref tab j y) joueur))
+			      (setf i 7))))))
+;gauche
+	      (if (= (adversaire joueur) (aref tab (- x 1) y))
+		  (do ((i (- x 1) (- i 1)))((< i 1))
+		    (if (= (aref tab i y) 0)
+			(setf i 0)
+			(if (= joueur (aref tab i y))
+			    (progn
+			      (setf changed T)
+			      (do ((j (+ i 1) (+ j 1)))((= x j))
+				(setf (aref tab j y) joueur))
+			      (setf i 0))))))
+;haut
+	      (if (= (adversaire joueur) (aref tab x (- y 1)))
+		  (do ((i (- y 1) (- i 1)))((< i 1))
+		    (if (= (aref tab x i) 0)
+			(setf i 0)
+			(if (= joueur (aref tab x i))
+			    (progn
+			      (setf changed T)
+			      (do ((j (+ i 1) (+ j 1)))((= y j))
+				(setf (aref tab x j) joueur))
+			      (setf i 0))))))
+;bas
+	      (if (= (adversaire joueur) (aref tab x (+ y 1)))
+		  (do ((i (+ 1 y) (+ i 1)))((> i 6))
+		    (if (= (aref tab x i) 0)
+			(setf i 7)
+			(if (= joueur (aref tab x i))
+			    (progn
+			      (setf changed T)
+			      (do ((j (- i 1) (- j 1)))((= y j))
+				(setf (aref tab x j) joueur))
+			      (setf i 7))))))
+;bas droite
+	      (if (= (adversaire joueur) (aref tab (+ x 1) (+ y 1)))
+		  (do ((i (+ 1 x) (+ i 1))(j (+ 1 y) (+ j 1)))
+		    ((or (> i 6) (> j 6)))
+		  (if (= (aref tab i j) 0)
+		      (setf i 7)
+		      (if (= joueur (aref tab i j))
+			  (progn
+			    (setf changed T)
+			    (do ((l (- i 1) (- l 1))(h (- j 1) (- h 1)))
+				((= l x))
+			      (setf (aref tab l h) joueur))
+			    (setf i 7))))))
+;bas gauche
+	      (if (= (adversaire joueur) (aref tab (- x 1) (+ y 1)))
+		  (do ((i (- x 1) (- i 1))(j (+ y 1) (+ j 1)))
+		      ((or (< i 1) (> j 6)))
+		    (if (= (aref tab i j) 0)
+		      (setf i 0)
+		      (if (= joueur (aref tab i j))
+			  (progn
+			    (setf changed T)
+			    (do ((l (+ i 1) (+ l 1))(h (- j 1) (- h 1)))
+				((= l x))
+			      (setf (aref tab l h) joueur))
+			    (setf i 0))))))
+;haut gauche
+	      (if (= (adversaire joueur) (aref tab (- x 1) (- y 1)))
+		  (do ((i (- x 1) (- i 1))(j (- y 1) (- j 1)))
+		      ((or (< i 1) (< j 1)))
+		    (if (= (aref tab i j) 0)
+		      (setf i 0)
+		      (if (= joueur (aref tab i j))
+			  (progn
+			    (setf changed T)
+			    (do ((l (+ i 1) (+ l 1))(h (+ j 1) (+ h 1)))
+				((= l x))
+			      (setf (aref tab l h) joueur))
+			    (setf i 0))))))
+;haut droite
+	      (if (= (adversaire joueur) (aref tab (+ x 1) (- y 1)))
+		  (do ((i (+ x 1) (+ i 1))(j (- y 1) (- j 1)))
+		      ((or (> i 6) (< j 1)))
+		    (format t "i = ~D~%" i)
+		    (if (= (aref tab i j) 0)
+		      (setf i 7)
+		      (if (= joueur (aref tab i j))
+			  (progn
+			    (format t "test 2 reussi~%")
+			    (setf changed T)
+			    (do ((l (- i 1) (- l 1))(h (+ j 1) (+ h 1)))
+				((> l 8))
+			      (format t "l = ~D~%" l)
+			      (if (= joueur (aref tab l h))
+				  (setf l 10)
+				  (setf (aref tab l h) joueur)))
+			    (setf i 7))))))
+;fin
+		(if changed
+		    T
+		    (progn
+		      (tab 
+		       NIL)))
+		NIL)))
 
-(defun ne-peut-pas-jouer (tab joueur)
-  (let ((bool T))
-    (do ((i 0 (+ i 1)))((= i 8))
-      (do ((j 0 (+ j 1)))((or (= j 8) (not bool)))
-	(if (coup-valide tab joueur i j)
-	    (setf bool nil))))
-    bool))
+	(defun fin-partie (tab)
+	  (and (ne-peut-pas-jouer tab 1) (ne-peut-pas-jouer tab 2)))
+
+	(defun ne-peut-pas-jouer (tab joueur)
+	  (let ((bool T))
+	    (do ((i 0 (+ i 1)))((= i 8))
+	      (do ((j 0 (+ j 1)))((or (= j 8) (not bool)))
+		(if (coup-valide tab joueur i j)
+		    (setf bool nil))))
+	    bool))
 
 (defun isspace (char)
   (if (or (char-equal char #\Newline) (char-equal char #\Space) (char-equal char #\Tab) (char-equal char #\Backspace)  (char-equal char #\Return) (char-equal char #\Linefeed))
@@ -413,9 +532,8 @@
 	  (do ()(coupvalide)
 	    (setf x (convert-abscisse))
 	    (setf y (convert-ordonnee))
-	    (if (coup-valide tab joueur x y)
+	    (if (jouer-coup-sans-test tab joueur x y)
 		(progn
-		  (jouer-coup tab joueur x y)
 		  (setf coupvalide T))
 		(if affichage
 		    (format t "Coup non valide~%Nouveau coup : "))
@@ -472,8 +590,8 @@
 			      (if (= 7 y)
 				  (write-char #\8))))))))))
 
-;Jouer coup de l'IA avec choix des meilleurs coups de l'adversaire
-(defun jouer-coup-ia-best-adv (tab joueur profondeur &key(ecrirecoup T) (affichage NIL))
+;Jouer coup de l'IA (si strat = 0 -> meilleurs coups de l'adv, si strat = 1 -> tous les coups de l'adv)
+(defun jouer-coup-ia (tab joueur profondeur &key(ecrirecoup T) (affichage NIL) (strat 0))
   (let ((x 8)(y 8)(max 0)(valcoup 0))
     (if (not (ne-peut-pas-jouer tab joueur))
 	(progn
@@ -482,7 +600,10 @@
 	      (if (= (aref tab i j) 0)
 		  (if (coup-valide tab joueur i j)
 		      (progn
-			(setf valcoup (eval-coup-best-adv tab joueur profondeur i j))
+			(if (= 0 strat)
+			    (setf valcoup (eval-coup-best-adv tab joueur profondeur i j))
+			    (if (= 1 strat)
+				(setf valcoup (eval-coup-all-adv tab joueur profondeur i j))))
 		        
 			(if (> valcoup max)
 			    (progn
@@ -509,21 +630,52 @@
 	(if (or (= profondeur 0) (= profondeur -1)) 
 	    (eval-tab tab2 joueur)
 	    (progn
-	      (jouer-coup-ia-best-adv tab2 (adversaire joueur) (- profondeur 1) :ecrirecoup NIL)
-	      (do ((x 0 (+ x 1)))((= x 8))
-		(do ((y 0 (+ y 1)))((= y 8))
-		  (if (coup-valide tab2 joueur x y)
+	      (jouer-coup-ia tab2 (adversaire joueur) (- profondeur 1) :ecrirecoup NIL)
+	      (if (= 1 profondeur)
+		  (eval-tab tab2 joueur)
+		  (progn
+		    (do ((x 0 (+ x 1)))((= x 8))
+		      (do ((y 0 (+ y 1)))((= y 8))
+			(if (coup-valide tab2 joueur x y)
+			    (progn
+			      (setf sommecoups (+ sommecoups (eval-coup-best-adv tab2 joueur (- profondeur 2) x y)))
+			      (setf nbrcoups (+ nbrcoups 1))))))))
+		  (if (= nbrcoups 0)
+		      1
+		      (/ sommecoups nbrcoups)))))))
+
+;Evalue un coup avec tous les coups de l'adversaire
+(defun eval-coup-all-adv (tab joueur profondeur i j)
+  (let ((tab2 (clone tab))(tab3 (clone tab))(nbrcoups 0)(sommecoups 0))
+    (jouer-coup tab2 joueur i j)
+    (if (fin-partie tab2)
+	(if (victoire tab2 joueur)
+	    valeurvictoire
+	    1)
+	(if (or (= profondeur 0) (= profondeur -1)) 
+	    (eval-tab tab2 joueur)
+	    (progn
+	      (do ((l 0 (+ l 1)))((= l 8))
+		(do ((h 0 (+ h 1)))((= h 8))
+		  (if (coup-valide tab2 (adversaire joueur) h l)
 		      (progn
-			(setf sommecoups (+ sommecoups (eval-coup-best-adv tab2 joueur (- profondeur 2) x y)))
-			(setf nbrcoups (+ nbrcoups 1))))))
+			(setf tab3 (clone tab2))
+			(jouer-coup tab3 (adversaire joueur) h l)
+			(if (= 1 profondeur)
+			    (progn
+			      (setf sommecoups (+ sommecoups (eval-tab tab3 joueur)))
+			      (setf nbrcoups (+ nbrcoups 1)))
+			    (progn
+			      (do ((x 0 (+ x 1)))((= x 8))
+				(do ((y 0 (+ y 1)))((= y 8))
+				  (if (coup-valide tab3 joueur x y)
+				      (progn
+					(setf sommecoups (+ sommecoups (eval-coup-best-adv tab3 joueur (- profondeur 2) x y)))
+					(setf nbrcoups (+ nbrcoups 1))))))))))))
 	      (if (= nbrcoups 0)
 		  1
 		  (/ sommecoups nbrcoups)))))))
 
-;TODO Jouer coup de l'IA avec tous les coups de l'adversaire
-;(defun jouer-coup-ia-all-adv (tab joueur profondeur &key(ecrirecoup T) (affichage NIL))
-		      
-	
 
 (defun eval-tab (tab joueur)
   (let ((valtab (compter-pions tab joueur)))
