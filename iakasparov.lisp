@@ -440,13 +440,16 @@
 				  (setf l 10)
 				  (setf (aref tab l h) joueur)))
 			    (setf i 7))))))
-;fin
-		(if changed
-		    T
-		    (progn
-		      (tab 
-		       NIL)))
-		NIL)))
+					;fin
+	      (if changed
+		  T
+		  (progn
+		    NIL
+		    (do ((n 0 (+ n 1))) ((= n 8))
+		      (do ((m 0 (+ m 1))) ((= m 8))
+			(setf (aref tab n m) (aref tab1 n m))))
+		    )))
+	    NIL)))
 
 	(defun fin-partie (tab)
 	  (and (ne-peut-pas-jouer tab 1) (ne-peut-pas-jouer tab 2)))
@@ -751,3 +754,4 @@
       (do ((y 0 (+ y 1)))((= y 8))
 	(setf (aref tab2 x y) (aref tab x y))))
     tab2))
+
