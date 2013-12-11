@@ -309,37 +309,6 @@
 	)
     ))
 
-;TODO
-(defun jouer-coup-ia (tab joueur)
-  (let ((x 8)(y 8))
-    (if (not (ne-peut-pas-jouer tab joueur))
-	(progn
-	  (do ((i 0 (+ i 1)))((coup-valide tab joueur x y))
-	    (setf x (random 8))
-	    (setf y (random 8)))
-	  (char-abscisse x)
-	  (char-ordonnee y)
-	  (jouer-coup tab joueur x y)
-	  )
-	)
-    ))
-
-;TODO
-(defun lire-coup (tab joueur)
-  (let ((coupvalide NIL) (x 0) (y 0))
-    (if (not (ne-peut-pas-jouer tab joueur))
-	(progn
-	  (do ()(coupvalide)
-	    (setf x (convert-abscisse))
-	    (setf y (convert-ordonnee))
-	    (if (coup-valide tab joueur x y)
-		(progn
-		  (jouer-coup tab joueur x y)
-		  (setf coupvalide T))
-		))
-	  (setf coupvalide NIL))
-	)))
-
 (defun jouer-coup-joueur (tab joueur)
   (let ((coupvalide NIL) (x 0) (y 0))
     (if (not (ne-peut-pas-jouer tab joueur))

@@ -497,7 +497,7 @@
 	  (if (< x 6)
 	      (if (= (adversaire joueur) (aref tab (+ x 1) y))
 		  (progn
-		    (do ((i (+ x 1) (+ i 1)))((or (= 8 i) (case-vide tab i y) eaten))
+		    (do ((i (+ x 1) (+ i 1)))((or (> i 7) (case-vide tab i y) eaten))
 		      (if (= joueur (aref tab i y))
 			  (progn
 			    (do ((l (- i 1) (- l 1)))((= x l))
@@ -509,7 +509,7 @@
 	  (if (> x 1)
 	      (if (= (adversaire joueur) (aref tab (- x 1) y))
 		  (progn
-		    (do ((i (- x 1) (- i 1)))((or (= 0 i) (case-vide tab i y) eaten))
+		    (do ((i (- x 1) (- i 1)))((or (< i 0) (case-vide tab i y) eaten))
 		      (if (= joueur (aref tab i y))
 			  (progn
 			    (do ((l (+ i 1) (+ l 1)))((= x l))
@@ -521,7 +521,7 @@
 	  (if (> y 1)
 	      (if (= (adversaire joueur) (aref tab x (- y 1)))
 		  (progn
-		    (do ((i (- y 1) (- i 1)))((or (= 0 i) (case-vide tab x i) eaten))
+		    (do ((i (- y 1) (- i 1)))((or (< i 0) (case-vide tab x i) eaten))
 		      (if (= joueur (aref tab x i))
 			  (progn
 			    (do ((h (+ i 1) (+ h 1)))((= y h))
@@ -533,7 +533,7 @@
 	  (if (< y 6)
 	      (if (= (adversaire joueur) (aref tab x (+ y 1)))
 		  (progn
-		    (do ((i (+ y 1) (+ i 1)))((or (= 8 i) (case-vide tab x i) eaten))
+		    (do ((i (+ y 1) (+ i 1)))((or (> i 7) (case-vide tab x i) eaten))
 		      (if (= joueur (aref tab x i))
 			  (progn
 			    (do ((h (- i 1) (- h 1)))((= y h))
@@ -545,7 +545,7 @@
 	  (if (and (< x 6) (< y 6))
 	      (if (= (adversaire joueur) (aref tab (+ x 1) (+ y 1)))
 		  (progn
-		    (do ((i (+ x 1) (+ i 1))(j (+ y 1) (+ j 1))) ((or (= 8 i) (= 8 j) (case-vide tab i j) eaten))
+		    (do ((i (+ x 1) (+ i 1))(j (+ y 1) (+ j 1))) ((or (> i 7) (> j 7) (case-vide tab i j) eaten))
 		      (if (= joueur (aref tab i j))
 			  (progn
 			    (do ((l (- i 1) (- l 1)) (h (- j 1) (- h 1))) ((or (= x l) (= y h)))
@@ -557,7 +557,7 @@
 	  (if (and (> x 1) (< y 6))
 	      (if (= (adversaire joueur) (aref tab (- x 1) (+ y 1)))
 		  (progn
-		    (do ((i (- x 1) (- i 1))(j (+ y 1) (+ j 1))) ((or (= 0 i) (= 8 j) (case-vide tab i j) eaten))
+		    (do ((i (- x 1) (- i 1))(j (+ y 1) (+ j 1))) ((or (< i 0) (> j 7) (case-vide tab i j) eaten))
 		      (if (= joueur (aref tab i j))
 			  (progn
 			    (do ((l (+ i 1) (+ l 1)) (h (- j 1) (- h 1))) ((or (= x l) (= y h)))
@@ -569,7 +569,7 @@
 	  (if (and (< x 6) (> y 1))
 	      (if (= (adversaire joueur) (aref tab (+ x 1) (- y 1)))
 		  (progn
-		    (do ((i (+ x 1) (+ i 1))(j (- y 1) (- j 1))) ((or (= 8 i) (= 0 j) (case-vide tab i j) eaten))
+		    (do ((i (+ x 1) (+ i 1))(j (- y 1) (- j 1))) ((or (> i 7) (< j 0) (case-vide tab i j) eaten))
 		      (if (= joueur (aref tab i j))
 			  (progn
 			    (do ((l (- i 1) (- l 1)) (h (+ j 1) (+ h 1))) ((or (= x l) (= y h)))
@@ -581,7 +581,7 @@
 	  (if (and (> x 1) (> y 1))
 	      (if (= (adversaire joueur) (aref tab (- x 1) (- y 1)))
 		  (progn
-		    (do ((i (- x 1) (- i 1))(j (- y 1) (- j 1))) ((or (= 0 i) (= 0 j) (case-vide tab i j) eaten))
+		    (do ((i (- x 1) (- i 1))(j (- y 1) (- j 1))) ((or (< i 0) (< j 0) (case-vide tab i j) eaten))
 		      (if (= joueur (aref tab i j))
 			  (progn
 			    (do ((l (+ i 1) (+ l 1)) (h (+ j 1) (+ h 1))) ((or (= x l) (= y h)))
